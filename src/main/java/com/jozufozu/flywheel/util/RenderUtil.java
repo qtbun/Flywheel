@@ -3,7 +3,6 @@ package com.jozufozu.flywheel.util;
 import java.util.function.Supplier;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.simibubi.create.foundation.utility.AngleHelper;
 
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.vector.Matrix3f;

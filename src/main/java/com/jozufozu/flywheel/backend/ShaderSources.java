@@ -89,7 +89,7 @@ public class ShaderSources implements ISelectiveResourceReloadListener {
 				}
 
 				Backend.log.info("Loaded all shader programs.");
-
+ 
 				// no need to hog all that memory
 				shaderSource.clear();
 			}

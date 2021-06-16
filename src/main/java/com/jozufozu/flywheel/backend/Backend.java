@@ -15,7 +15,6 @@ import com.jozufozu.flywheel.backend.gl.versioned.GlCompat;
 import com.jozufozu.flywheel.backend.instancing.InstanceData;
 import com.jozufozu.flywheel.backend.instancing.MaterialSpec;
 import com.jozufozu.flywheel.core.shader.spec.ProgramSpec;
-import com.simibubi.create.foundation.config.AllConfigs;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
@@ -144,7 +143,8 @@ public class Backend {
 				compat.drawInstancedSupported() &&
 				compat.instancedArraysSupported();
 
-		enabled = AllConfigs.CLIENT.experimentalRendering.get() && !OptifineHandler.usingShaders();
+		// TODO: Config
+		enabled = !OptifineHandler.usingShaders();
 	}
 
 	public boolean canUseInstancing(World world) {

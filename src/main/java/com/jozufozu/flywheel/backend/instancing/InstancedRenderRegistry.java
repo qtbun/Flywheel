@@ -9,8 +9,6 @@ import com.jozufozu.flywheel.backend.instancing.entity.EntityInstance;
 import com.jozufozu.flywheel.backend.instancing.entity.IEntityInstanceFactory;
 import com.jozufozu.flywheel.backend.instancing.tile.ITileInstanceFactory;
 import com.jozufozu.flywheel.backend.instancing.tile.TileEntityInstance;
-import com.simibubi.create.AllEntityTypes;
-import com.simibubi.create.content.contraptions.components.structureMovement.glue.GlueInstance;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -33,10 +31,6 @@ public class InstancedRenderRegistry {
 
 	public <T extends Entity> void register(EntityType<? extends T> type, IEntityInstanceFactory<? super T> rendererFactory) {
 		this.entities.put(type, rendererFactory);
-	}
-
-	static {
-		INSTANCE.register(AllEntityTypes.SUPER_GLUE.get(), GlueInstance::new);
 	}
 
 	@SuppressWarnings("unchecked")
