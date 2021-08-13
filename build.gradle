@@ -89,6 +89,8 @@ mixin {
 }
 
 repositories {
+    // for geckolib
+    maven { url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
     maven {
         name "tterrag maven"
         url "https://maven.tterrag.com/"
@@ -99,6 +101,8 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
     //implementation "org.joml:joml:1.10.1"
+
+    implementation fg.deobf("software.bernie.geckolib:${geckolib_version}")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 }

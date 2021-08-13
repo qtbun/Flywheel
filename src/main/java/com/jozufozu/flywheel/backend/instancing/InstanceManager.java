@@ -35,6 +35,7 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 	protected final Map<T, IInstance> instances;
 	protected final Object2ObjectOpenHashMap<T, ITickableInstance> tickableInstances;
 	protected final Object2ObjectOpenHashMap<T, IDynamicInstance> dynamicInstances;
+	protected final Object2ObjectOpenHashMap<T, ISerialDynamicInstance> serialDynamicInstances;
 
 	protected int frame;
 	protected int tick;
@@ -47,6 +48,7 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 
 		this.dynamicInstances = new Object2ObjectOpenHashMap<>();
 		this.tickableInstances = new Object2ObjectOpenHashMap<>();
+		this.serialDynamicInstances = new Object2ObjectOpenHashMap<>();
 
 		materialManager.addListener(this);
 	}
@@ -131,6 +133,10 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 						if (!dyn.decreaseFramerateWithDistance() || shouldFrameUpdate(dyn.getWorldPosition(), lookX, lookY, lookZ, cX, cY, cZ))
 							dyn.beginFrame();
 					});
+
+			serialDynamicInstances.object2ObjectEntrySet()
+					.fastForEach(e -> e.getValue()
+							.beginFrame());
 		}
 	}
 
@@ -294,6 +300,7 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 		instance.remove();
 		instances.remove(obj);
 		dynamicInstances.remove(obj);
+		serialDynamicInstances.remove(obj);
 		tickableInstances.remove(obj);
 	}
 
@@ -305,6 +312,8 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 			instances.put(obj, renderer);
 
 			if (renderer instanceof IDynamicInstance) dynamicInstances.put(obj, (IDynamicInstance) renderer);
+
+			if (renderer instanceof ISerialDynamicInstance) serialDynamicInstances.put(obj, (ISerialDynamicInstance) renderer);
 
 			if (renderer instanceof ITickableInstance) tickableInstances.put(obj, ((ITickableInstance) renderer));
 		}
