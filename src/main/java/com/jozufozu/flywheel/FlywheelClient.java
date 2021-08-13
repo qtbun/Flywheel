@@ -28,7 +28,7 @@ public class FlywheelClient {
 		modEventBus.addListener(PartialModel::onModelBake);
 
 		if (ModList.get()
-				.isLoaded("geckolib"))
+				.isLoaded("geckolib3"))
 			modEventBus.addListener(GeckolibCompat::init);
 
 		VanillaInstances.init();

@@ -125,7 +125,7 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 		int cY = (int) info.getPosition().y;
 		int cZ = (int) info.getPosition().z;
 
-		if (dynamicInstances.size() > 0) {
+		if (!dynamicInstances.isEmpty()) {
 			dynamicInstances.object2ObjectEntrySet()
 					.parallelStream()
 					.forEach(e -> {
@@ -133,7 +133,9 @@ public abstract class InstanceManager<T> implements MaterialManager.OriginShiftL
 						if (!dyn.decreaseFramerateWithDistance() || shouldFrameUpdate(dyn.getWorldPosition(), lookX, lookY, lookZ, cX, cY, cZ))
 							dyn.beginFrame();
 					});
+		}
 
+		if (!serialDynamicInstances.isEmpty()) {
 			serialDynamicInstances.object2ObjectEntrySet()
 					.fastForEach(e -> e.getValue()
 							.beginFrame());
