@@ -48,12 +48,8 @@ public class GeoTileInstance<T extends TileEntity & IAnimatable> extends TileEnt
 				.rotateToFace(getFacing());
 
 		for (GeoBone bone : model.topLevelBones) {
-			GeoInstanceTree e = new GeoInstanceTree(materialManager, state, bone);
-			e.transform(stack.unwrap());
-			topLevelBones.add(e);
+			topLevelBones.add(new GeoInstanceTree(materialManager, state, bone));
 		}
-
-
 	}
 
 	@Override
@@ -61,6 +57,7 @@ public class GeoTileInstance<T extends TileEntity & IAnimatable> extends TileEnt
 		modelProvider.setLivingAnimations(tile, tile.hashCode());
 
 		for (GeoInstanceTree bone : topLevelBones) {
+			bone.recursiveCheckNeedsUpdate();
 			bone.transform(stack.unwrap());
 		}
 	}

@@ -21,7 +21,23 @@ public class GeoInstanceTree {
 
 	private final List<GeoInstanceTree> children;
 
-	private boolean modelsHidden;
+
+	private UpdateTask action;
+
+	private boolean hidden = false;
+
+	private float lastScaleX = Float.NaN;
+	private float lastScaleY = Float.NaN;
+	private float lastScaleZ = Float.NaN;
+	private float lastPositionX = Float.NaN;
+	private float lastPositionY = Float.NaN;
+	private float lastPositionZ = Float.NaN;
+	private float lastRotationX = Float.NaN;
+	private float lastRotationY = Float.NaN;
+	private float lastRotationZ = Float.NaN;
+	private float lastPivotX = Float.NaN;
+	private float lastPivotY = Float.NaN;
+	private float lastPivotZ = Float.NaN;
 
 	public GeoInstanceTree(MaterialManager<?> materialManager, IRenderState tex, GeoBone bone) {
 		this.bone = bone;
@@ -44,15 +60,76 @@ public class GeoInstanceTree {
 		children = builder.build();
 	}
 
-	public void transform(MatrixStack stack) {
-		if (bone.isHidden() && !modelsHidden) {
-			hide();
-			modelsHidden = true;
-			return;
+	/**
+	 * Figure out what needs to be done this frame.
+	 *
+	 * <p>
+	 *     This calculates the minimal amount of work needed to correctly update this bone.
+	 * </p>
+	 *
+	 * @return The task we will perform.
+	 */
+	public UpdateTask recursiveCheckNeedsUpdate() {
+		// by default, we assume there's nothing to do
+		action = UpdateTask.SKIP;
+
+		// hidden propagates to children, no need to search further
+		if (bone.isHidden() && !hidden) {
+			return action = UpdateTask.HIDE;
 		}
 
-		modelsHidden = false;
+		// no need to search further
+		// changes to our bone MUST pe passed on to all our child bones
+		if (boneNeedsUpdate()) {
+			return action = UpdateTask.UPDATE;
+		}
 
+		for (GeoInstanceTree child : children) {
+			UpdateTask childTask = child.recursiveCheckNeedsUpdate();
+
+			// don't early return here because we need to check all the children too
+			if (childTask.needsParentPassthrough())
+				action = UpdateTask.PASSTHROUGH;
+		}
+
+		return action;
+	}
+
+	public void transform(MatrixStack stack) {
+		switch (action) {
+		case HIDE:
+			hide();
+			break;
+		case PASSTHROUGH:
+			update(stack, false);
+			break;
+		case UPDATE:
+			update(stack, true);
+
+			//
+			this.lastScaleX = bone.getScaleX();
+			this.lastScaleY = bone.getScaleY();
+			this.lastScaleZ = bone.getScaleZ();
+			this.lastPositionX = bone.getPositionX();
+			this.lastPositionY = bone.getPositionY();
+			this.lastPositionZ = bone.getPositionZ();
+			this.lastRotationX = bone.getRotationX();
+			this.lastRotationY = bone.getRotationY();
+			this.lastRotationZ = bone.getRotationZ();
+			this.lastPivotX = bone.getPivotX();
+			this.lastPivotY = bone.getPivotY();
+			this.lastPivotZ = bone.getPivotZ();
+		default:
+		}
+	}
+
+	/**
+	 * Calculates the bone transform matrix and passes it on to the children.
+	 *
+	 * @param stack The MatrixStack we'll use to compute all the bone transforms.
+	 * @param thisChanged If true, all descendent nodes will be updated regardless of their {@link #action}
+	 */
+	private void update(MatrixStack stack, boolean thisChanged) {
 		stack.pushPose();
 		RenderUtils.translate(bone, stack);
 		RenderUtils.moveToPivot(bone, stack);
@@ -60,14 +137,35 @@ public class GeoInstanceTree {
 		RenderUtils.scale(bone, stack);
 		RenderUtils.moveBackFromPivot(bone, stack);
 
-		if (boneInstance != null)
-			boneInstance.setTransform(stack);
+		if (thisChanged) {
+			if (boneInstance != null)
+				boneInstance.setTransform(stack);
 
-		for (GeoInstanceTree child : children) {
-			child.transform(stack);
+			for (GeoInstanceTree child : children) {
+				child.update(stack, true);
+			}
+		} else {
+			for (GeoInstanceTree child : children) {
+				child.transform(stack);
+			}
 		}
 
 		stack.popPose();
+	}
+
+	private boolean boneNeedsUpdate() {
+		return this.lastScaleX != bone.getScaleX()
+				|| this.lastScaleY != bone.getScaleY()
+				|| this.lastScaleZ != bone.getScaleZ()
+				|| this.lastPositionX != bone.getPositionX()
+				|| this.lastPositionY != bone.getPositionY()
+				|| this.lastPositionZ != bone.getPositionZ()
+				|| this.lastRotationX != bone.getRotationX()
+				|| this.lastRotationY != bone.getRotationY()
+				|| this.lastRotationZ != bone.getRotationZ()
+				|| this.lastPivotX != bone.getPivotX()
+				|| this.lastPivotY != bone.getPivotY()
+				|| this.lastPivotZ != bone.getPivotZ();
 	}
 
 	private void hide() {
@@ -75,6 +173,8 @@ public class GeoInstanceTree {
 			boneInstance.setEmptyTransform();
 
 		children.forEach(GeoInstanceTree::hide);
+
+		hidden = true;
 	}
 
 	public void delete() {
