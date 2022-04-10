@@ -7,7 +7,6 @@ import com.jozufozu.flywheel.api.InstanceData;
 import com.jozufozu.flywheel.api.MaterialGroup;
 import com.jozufozu.flywheel.api.struct.Batched;
 import com.jozufozu.flywheel.api.struct.StructType;
-import com.jozufozu.flywheel.backend.OptifineHandler;
 import com.jozufozu.flywheel.backend.instancing.BatchDrawingTracker;
 import com.jozufozu.flywheel.backend.instancing.TaskEngine;
 import com.jozufozu.flywheel.backend.model.DirectVertexConsumer;
@@ -31,7 +30,7 @@ public class BatchedMaterialGroup implements MaterialGroup {
 	@Override
 	public <D extends InstanceData> BatchedMaterial<D> material(StructType<D> type) {
 		if (type instanceof Batched<D> batched) {
-			return (BatchedMaterial<D>) materials.computeIfAbsent(batched, BatchedMaterial::new);
+			return (BatchedMaterial<D>) materials.computeIfAbsent(batched, t -> new BatchedMaterial<>(t, state));
 		} else {
 			throw new ClassCastException("Cannot use type '" + type + "' with CPU instancing.");
 		}
@@ -56,7 +55,6 @@ public class BatchedMaterialGroup implements MaterialGroup {
 
 		for (BatchedMaterial<?> material : materials.values()) {
 			for (CPUInstancer<?> instancer : material.models.values()) {
-				instancer.sbb.context.outputColorDiffuse = !consumer.hasOverlay() && !OptifineHandler.isUsingShaders();
 				instancer.submitTasks(stack, pool, consumer);
 			}
 		}

@@ -2,14 +2,17 @@ package com.jozufozu.flywheel.core.materials.oriented;
 
 import com.jozufozu.flywheel.api.struct.Batched;
 import com.jozufozu.flywheel.api.struct.Instanced;
+import com.jozufozu.flywheel.api.struct.ModelTransformer;
 import com.jozufozu.flywheel.api.struct.StructWriter;
 import com.jozufozu.flywheel.backend.gl.buffer.VecBuffer;
 import com.jozufozu.flywheel.core.Programs;
 import com.jozufozu.flywheel.core.layout.BufferLayout;
 import com.jozufozu.flywheel.core.layout.CommonItems;
-import com.jozufozu.flywheel.core.model.ModelTransformer;
+import com.jozufozu.flywheel.core.model.DefaultModelTransformer;
+import com.jozufozu.flywheel.core.model.Model;
 import com.mojang.math.Quaternion;
 
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 public class OrientedType implements Instanced<OrientedData>, Batched<OrientedData> {
@@ -40,11 +43,13 @@ public class OrientedType implements Instanced<OrientedData>, Batched<OrientedDa
 	}
 
 	@Override
-	public void transform(OrientedData d, ModelTransformer.Params b) {
-		b.light(d.getPackedLight())
-				.color(d.r, d.g, d.b, d.a)
-				.translate(d.posX + d.pivotX, d.posY + d.pivotY, d.posZ + d.pivotZ)
-				.multiply(new Quaternion(d.qX, d.qY, d.qZ, d.qW))
-				.translate(-d.pivotX, -d.pivotY, -d.pivotZ);
+	public ModelTransformer<OrientedData> createTransformer(Model modelData, RenderType renderType) {
+		return new DefaultModelTransformer<>(modelData, renderType, (d, b) -> {
+			b.light(d.getPackedLight())
+					.color(d.r, d.g, d.b, d.a)
+					.translate(d.posX + d.pivotX, d.posY + d.pivotY, d.posZ + d.pivotZ)
+					.multiply(new Quaternion(d.qX, d.qY, d.qZ, d.qW))
+					.translate(-d.pivotX, -d.pivotY, -d.pivotZ);
+		});
 	}
 }

@@ -10,6 +10,7 @@ import com.jozufozu.flywheel.util.AnimationTickHolder;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BellRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BellBlockEntity;
@@ -57,7 +58,7 @@ public class BellInstance extends BlockEntityInstance<BellBlockEntity> implement
 	}
 
 	private OrientedData createBellInstance() {
-        return materialManager.defaultCutout()
+        return materialManager.solid(Sheets.solidBlockSheet())
                 .material(Materials.ORIENTED)
 				.model(blockEntity.getType(), BellInstance::createBellModel)
 				.createInstance();

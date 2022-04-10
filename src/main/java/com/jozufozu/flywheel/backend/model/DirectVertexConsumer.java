@@ -77,10 +77,6 @@ public class DirectVertexConsumer implements VertexConsumer {
 		MemoryUtil.memSet(vertexBase, 0, end - vertexBase);
 	}
 
-	public boolean hasOverlay() {
-		return uv1 >= 0;
-	}
-
 	/**
 	 * Split off the head of this consumer into a new object and advance this object's write-pointer.
 	 * @param vertexCount The number of vertices that must be written to the head.

@@ -1,13 +1,18 @@
 package com.jozufozu.flywheel.core.model;
 
+import java.util.function.BiConsumer;
 import java.util.function.IntPredicate;
 
+import com.jozufozu.flywheel.api.struct.ModelTransformer;
 import com.jozufozu.flywheel.api.vertex.ShadedVertexList;
 import com.jozufozu.flywheel.api.vertex.VertexList;
+import com.jozufozu.flywheel.backend.OptifineHandler;
 import com.jozufozu.flywheel.util.DiffuseLightCalculator;
 import com.jozufozu.flywheel.util.transform.Transform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
@@ -15,18 +20,19 @@ import com.mojang.math.Vector3f;
 import com.mojang.math.Vector4f;
 
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 
-public class ModelTransformer {
+public class DefaultModelTransformer<S> implements ModelTransformer<S> {
 
-	private final Model model;
-	private final VertexList reader;
-	private final IntPredicate shadedPredicate;
+	protected final Model model;
+	protected final VertexList reader;
+	protected final IntPredicate shadedPredicate;
+	protected final BiConsumer<S, Params> paramFiller;
+	protected final boolean disableDiffuse;
 
-	public final Context context = new Context();
-
-	public ModelTransformer(Model model) {
+	public DefaultModelTransformer(Model model, RenderType renderType, BiConsumer<S, Params> paramFiller) {
 		this.model = model;
 		reader = model.getReader();
 		if (reader instanceof ShadedVertexList shaded) {
@@ -34,12 +40,33 @@ public class ModelTransformer {
 		} else {
 			shadedPredicate = index -> true;
 		}
+		this.paramFiller = paramFiller;
+		disableDiffuse = hasOverlay(renderType.format());
 	}
 
-	public void renderInto(Params params, PoseStack input, VertexConsumer builder) {
-		if (isEmpty())
+	protected static boolean hasOverlay(VertexFormat format) {
+		for (VertexFormatElement element : format.getElements()) {
+			if (element.getUsage() == VertexFormatElement.Usage.UV && element.getIndex() == 1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void renderInto(S struct, VertexConsumer buffer, PoseStack poseStack) {
+		if (reader.isEmpty())
 			return;
 
+		boolean outputColorDiffuse = !disableDiffuse && !OptifineHandler.isUsingShaders();
+
+		Params params = new Params();
+		params.loadDefault();
+		paramFiller.accept(struct, params);
+		renderInto(buffer, poseStack, params, outputColorDiffuse);
+	}
+
+	protected void renderInto(VertexConsumer builder, PoseStack input, Params params, boolean outputColorDiffuse) {
 		Vector4f pos = new Vector4f();
 		Vector3f normal = new Vector3f();
 
@@ -48,13 +75,7 @@ public class ModelTransformer {
 				.copy();
 		modelMat.multiply(params.model);
 
-		Matrix3f normalMat;
-		if (context.fullNormalTransform) {
-			normalMat = input.last().normal().copy();
-			normalMat.mul(params.normal);
-		} else {
-			normalMat = params.normal.copy();
-		}
+		Matrix3f normalMat = params.normal.copy();
 
 		final DiffuseLightCalculator diffuseCalculator = DiffuseLightCalculator.forCurrentLevel();
 
@@ -90,7 +111,7 @@ public class ModelTransformer {
 				b = reader.getB(i);
 				a = reader.getA(i);
 			}
-			if (context.outputColorDiffuse) {
+			if (outputColorDiffuse) {
 				float instanceDiffuse = diffuseCalculator.getDiffuse(nx, ny, nz, shadedPredicate.test(i));
 				int colorR = transformColor(r, instanceDiffuse);
 				int colorG = transformColor(g, instanceDiffuse);
@@ -122,13 +143,9 @@ public class ModelTransformer {
 		}
 	}
 
-	public boolean isEmpty() {
-		return reader.isEmpty();
-	}
-
 	@Override
 	public String toString() {
-		return "ModelTransformer[" + model + ']';
+		return "DefaultModelTransformer[" + model + ']';
 	}
 
 	public static int transformColor(byte component, float scale) {
@@ -142,18 +159,6 @@ public class ModelTransformer {
 	@FunctionalInterface
 	public interface SpriteShiftFunc {
 		void shift(VertexConsumer builder, float u, float v);
-	}
-
-	public static class Context {
-		/**
-		 * Do we need to include the PoseStack transforms in our transformation of the normal?
-		 */
-		public boolean fullNormalTransform = false;
-
-		/**
-		 * Do we need to bake diffuse lighting into the output colors?
-		 */
-		public boolean outputColorDiffuse = true;
 	}
 
 	public static class Params implements Transform<Params> {
@@ -271,12 +276,13 @@ public class ModelTransformer {
 				}
 
 				normal.mul(-1.0F);
+				return this;
 			}
 
 			float f = 1.0F / pX;
 			float f1 = 1.0F / pY;
 			float f2 = 1.0F / pZ;
-			float f3 = Mth.fastInvCubeRoot(f * f1 * f2);
+			float f3 = Mth.fastInvCubeRoot(Math.abs(f * f1 * f2));
 			normal.mul(Matrix3f.createScaleMatrix(f3 * f, f3 * f1, f3 * f2));
 			return this;
 		}
@@ -284,7 +290,6 @@ public class ModelTransformer {
 		@Override
 		public Params translate(double x, double y, double z) {
 			model.multiplyWithTranslation((float) x, (float) y, (float) z);
-
 			return this;
 		}
 

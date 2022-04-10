@@ -2,25 +2,27 @@ package com.jozufozu.flywheel.backend.instancing.batching;
 
 import com.jozufozu.flywheel.api.InstanceData;
 import com.jozufozu.flywheel.api.struct.Batched;
+import com.jozufozu.flywheel.api.struct.ModelTransformer;
 import com.jozufozu.flywheel.backend.instancing.AbstractInstancer;
 import com.jozufozu.flywheel.backend.instancing.TaskEngine;
 import com.jozufozu.flywheel.backend.model.DirectVertexConsumer;
 import com.jozufozu.flywheel.core.model.Model;
-import com.jozufozu.flywheel.core.model.ModelTransformer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import net.minecraft.client.renderer.RenderType;
 
 public class CPUInstancer<D extends InstanceData> extends AbstractInstancer<D> {
 
 	private final Batched<D> batchingType;
+	private final RenderType renderType;
+	private final ModelTransformer<D> transformer;
 
-	final ModelTransformer sbb;
-
-	public CPUInstancer(Batched<D> type, Model modelData) {
+	public CPUInstancer(Batched<D> type, Model modelData, RenderType renderType) {
 		super(type::create, modelData);
 		batchingType = type;
-
-		sbb = new ModelTransformer(modelData);
+		this.renderType = renderType;
+		transformer = type.createTransformer(modelData, renderType);
 	}
 
 	void submitTasks(PoseStack stack, TaskEngine pool, DirectVertexConsumer consumer) {
@@ -40,25 +42,14 @@ public class CPUInstancer<D extends InstanceData> extends AbstractInstancer<D> {
 	}
 
 	private void drawRange(PoseStack stack, VertexConsumer buffer, int from, int to) {
-		ModelTransformer.Params params = new ModelTransformer.Params();
-
 		for (D d : data.subList(from, to)) {
-			params.loadDefault();
-
-			batchingType.transform(d, params);
-
-			sbb.renderInto(params, stack, buffer);
+			transformer.renderInto(d, buffer, stack);
 		}
 	}
 
 	void drawAll(PoseStack stack, VertexConsumer buffer) {
-		ModelTransformer.Params params = new ModelTransformer.Params();
 		for (D d : data) {
-			params.loadDefault();
-
-			batchingType.transform(d, params);
-
-			sbb.renderInto(params, stack, buffer);
+			transformer.renderInto(d, buffer, stack);
 		}
 	}
 

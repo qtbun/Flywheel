@@ -1,8 +1,9 @@
 package com.jozufozu.flywheel.api.struct;
 
-import com.jozufozu.flywheel.core.model.ModelTransformer;
+import com.jozufozu.flywheel.core.model.Model;
+
+import net.minecraft.client.renderer.RenderType;
 
 public interface Batched<S> extends StructType<S> {
-
-	void transform(S d, ModelTransformer.Params b);
+	ModelTransformer<S> createTransformer(Model modelData, RenderType renderType);
 }
