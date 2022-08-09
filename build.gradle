@@ -41,7 +41,9 @@ minecraft {
             property 'forge.logging.markers', ''
             property 'forge.logging.console.level', 'debug'
             property 'fml.earlyprogresswindow', 'false'
-
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            
             arg "-mixin.config=flywheel.mixins.json"
 
             mods {
@@ -93,11 +95,23 @@ repositories {
         name "tterrag maven"
         url "https://maven.tterrag.com/"
     }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // switch to implementation for debugging
+    compileOnly fg.deobf("maven.modrinth:starlight-forge:1.0.2+1.18.2")
 
+    compileOnly fg.deobf("maven.modrinth:rubidium:0.5.2a")
+    compileOnly fg.deobf("curse.maven:oculus-581495:3821406")
+    
     //implementation "org.joml:joml:1.10.1"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
