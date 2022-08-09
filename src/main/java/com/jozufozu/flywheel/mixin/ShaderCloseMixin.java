@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.jozufozu.flywheel.backend.OptifineHandler;
+import com.jozufozu.flywheel.backend.ShaderModHandler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
@@ -23,12 +23,12 @@ public class ShaderCloseMixin {
 
 	@Inject(at = @At("HEAD"), method = "setScreen")
 	private void whenScreenChanges(Screen screen, CallbackInfo info) {
-		if (OptifineHandler.optifineInstalled() && screen instanceof VideoSettingsScreen) {
+		if (ShaderModHandler.isRenderingShadowPass() && screen instanceof VideoSettingsScreen) {
 			Screen old = this.screen;
 			if (old != null && old.getClass()
 					.getName()
-					.startsWith(OptifineHandler.SHADER_PACKAGE)) {
-				OptifineHandler.refresh();
+					.startsWith(ShaderModHandler.SHADER_PACKAGE)) {
+				ShaderModHandler.refresh();
 			}
 		}
 	}
