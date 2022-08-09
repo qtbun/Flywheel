@@ -55,7 +55,7 @@ public class Backend {
 
 		sources = new ShaderSources(this);
 
-		OptifineHandler.init();
+		ShadersModHandler.init();
 	}
 
 	void clearContexts() {
@@ -144,7 +144,7 @@ public class Backend {
 	}
 
 	public void refresh() {
-		OptifineHandler.refresh();
+		ShadersModHandler.refresh();
 		capabilities = GL.createCapabilities();
 
 		compat = new GlCompat(capabilities);
@@ -152,7 +152,7 @@ public class Backend {
 		instancedArrays = compat.vertexArrayObjectsSupported() && compat.drawInstancedSupported() && compat.instancedArraysSupported();
 
 		enabled = FlwConfig.get()
-				.enabled() && !OptifineHandler.usingShaders();
+				.enabled() && !ShadersModHandler.usingShaders();
 	}
 
 	public boolean canUseInstancing(@Nullable World world) {
