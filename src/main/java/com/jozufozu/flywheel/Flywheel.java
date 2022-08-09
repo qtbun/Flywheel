@@ -3,6 +3,7 @@ package com.jozufozu.flywheel;
 import com.jozufozu.flywheel.config.FlwCommands;
 import com.jozufozu.flywheel.config.FlwConfig;
 import com.jozufozu.flywheel.config.FlwPackets;
+import com.jozufozu.flywheel.backend.ShadersModHandler;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,6 +24,7 @@ public class Flywheel {
 
 		MinecraftForge.EVENT_BUS.addListener(FlwCommands::onServerStarting);
 
+		ShadersModHandler.init();		
 		FlwConfig.init();
 
 		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> FlywheelClient::clientInit);
